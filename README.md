@@ -1,10 +1,16 @@
 # ironman-quest3-hud
 
-An Iron Man-style mixed-reality HUD for the Meta Quest 3. A head-mounted Jetson Nano camera detects objects and streams them to a Quest 3 app, which draws HUD overlays (boxes, labels, distance, target lock) on passthrough. A 3D-printed repulsor prop with a [nicklink](https://github.com/NickStassen/nicklink) IMU inside aims and fires "blasts" at detected objects.
+An Iron Man-style mixed-reality HUD for the Meta Quest 3. The app detects objects in the headset's own camera feed and draws world-locked overlays (boxes, labels, distance, target lock) on passthrough. A 3D-printed repulsor prop built around a Touch Plus controller aims and fires VR "blasts" at detected objects, with nicklink over BLE for LEDs and sound.
 
-Status: planning. The full plan is coming in `docs/PLAN.md`.
+**Direction:** headset camera first. Unity 6 + Meta XR Core SDK + MRUK, Passthrough Camera API frames, on-device YOLO first, then offload to an RTX 5080 running DeepStream 8 + NvDCF. A head-mounted Jetson camera is an optional later phase.
 
-Builds on:
-- [deepstream-house-tracker](https://github.com/NickStassen/deepstream-house-tracker): Jetson detection + tracking + JSON events
-- [jetson-nano-ov5647](https://github.com/NickStassen/jetson-nano-ov5647): CSI camera driver
+**Status:** planning done; Phase 0 (Quest dev setup) next.
+
+## Docs
+- [docs/PLAN.md](docs/PLAN.md): phased plan, architecture, risks, week-1 checklist
+- [docs/RESEARCH.md](docs/RESEARCH.md): research brief (as of Oct 6, 2026)
+
+## Related repos
+- [deepstream-house-tracker](https://github.com/NickStassen/deepstream-house-tracker): DeepStream detection + NvDCF tracking + JSON events
 - [nicklink](https://github.com/NickStassen/nicklink): STM32F103 board with an LSM6DSV IMU
+- [jetson-nano-ov5647](https://github.com/NickStassen/jetson-nano-ov5647): OV5647 CSI camera driver for Jetson Nano
