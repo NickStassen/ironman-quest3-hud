@@ -22,11 +22,11 @@ Personal hobby project.
 
 **v2 (target architecture, Direction B):** detection and NvDCF tracking run on the RTX 5080, tracks stream back to the headset, and the app falls back to on-device detection when the link drops (Phase 5).
 
-**Optional:** external head-mounted camera (Phase 6) and polish (Phase 7).
+**Optional:** room-corner Jetson camera with fused tracks (Phase 6) and polish (Phase 7).
 
 ## Architecture
 
-Direction B from the research: the Quest's own Passthrough Camera API (PCA) is the camera. Detection starts on-device (Stage A) and moves to the desktop (Stage B). The Jetson is an optional later phase (Direction C), only for a wider FOV or a sensor PCA can't provide.
+Direction B from the research: the Quest's own Passthrough Camera API (PCA) is the camera. Detection starts on-device (Stage A) and moves to the desktop (Stage B). The Jetson is an optional later phase: a room-corner camera whose tracks are fused with the headset's for object permanence and redundancy.
 
 Why: PCA gives RGB frames with intrinsics, a world-space camera pose and a timestamp per frame. That removes external-camera calibration and Jetson-to-Quest clock sync, which were the hardest parts of the original plan.
 
@@ -65,7 +65,7 @@ flowchart LR
   TOUCH --> GAME
   GAME <-.->|"BLE GATT"| NL
 
-  JET["Optional Phase 6:<br/>Jetson / Orin Nano Super<br/>external camera"]
+  JET["Optional Phase 6:<br/>room-corner Jetson camera<br/>detection + tracking"]
   JET -.->|"UDP tracks"| TM
 ```
 
@@ -201,22 +201,22 @@ Acceptance (record and compare with Phase 1):
 
 Effort: 2 to 3 W + 6 to 10 E.
 
-### Phase 6 (optional): head-mounted external camera
+### Phase 6 (optional): Room-corner Jetson camera + fused tracks / object permanence
 
-Only worth it for a wider FOV or a special sensor (thermal, global shutter).
+A Jetson (Nano or Orin Nano Super) with a camera mounted high in a room corner runs detection + tracking (DeepStream + NvDCF) and streams tracks to the Quest over UDP. Nothing is worn on the head.
 
 Deliverables:
-- Pick the board: Jetson Nano (JetPack 4.6.6 is EOL; DeepStream 6.0.1 ceiling; devkit has no Wi-Fi, needs an M.2 Key E card such as Intel 8265) or Orin Nano Super (about $399 after the July 2026 price hike [snippet]; 22-pin CSI, so the [jetson-nano-ov5647](https://github.com/NickStassen/jetson-nano-ov5647) driver won't carry over).
-- Rigid mount on the headset (Quest 3 is 515 g; record added weight).
-- ChArUco calibration against the PCA camera: capture the board from both cameras at once, `cv2.stereoCalibrate` or paired `solvePnP`, chain with PCA camera-to-head extrinsics.
-- Capture timestamps from Argus `ICaptureMetadata`; clock sync; head pose at capture time via `OVRPlugin.GetNodePoseStateAtTime`.
+- Jetson pipeline: detection + tracker, per-frame tracks (id, class, bbox, capture timestamp) over UDP, reusing the Phase 5 packet format.
+- Registration: occasionally (on start, then every few seconds or when the error grows), match features between a Jetson frame and a PCA frame with LoFTR or a similar matcher (on the desktop or Jetson) and solve the Jetson-camera-to-world transform. Not run every frame. The static mount means the transform rarely changes.
+- Fusion on the Quest: headset and Jetson tracks go into one world-space track list. An object keeps its world position and ID while the headset can't see it (object permanence), as long as the Jetson still tracks it.
+- Redundancy: if headset detection drops (low light, FOV edge, inference stall), Jetson tracks keep overlays alive.
 
 Acceptance:
-- Calibration reprojection error recorded.
-- Validation: project the tracked controller position into the external image; record pixel error.
-- Capture-to-overlay age recorded and compared with Phases 1 and 5.
+- Registration error recorded (cm, by projecting a known point or the tracked controller into both views).
+- A target stays world-locked with a stable ID after you turn away and back (record ID switches).
+- Capture-to-overlay age for Jetson tracks recorded and compared with Phases 1 and 5.
 
-Effort: 3 to 4 W + several E.
+Effort: 2 to 3 W + several E.
 
 ### Phase 7: Polish
 
@@ -251,7 +251,7 @@ Add a Unity `.gitignore` (Library/, Temp/, Builds/) and Git LFS for large binari
 |---|---|
 | On-device YOLO FPS and offload latency are unpublished | Phase 1 harness first; decide on Stage B from real numbers |
 | Inference on the main thread drops frames | Layer-by-layer inference, async readback, smallest model, lower detection rate than render rate |
-| PCA FOV is narrower than passthrough | Show detections only where the camera sees; HUD hint at FOV edge; Phase 6 if it matters |
+| PCA FOV is narrower than passthrough | Show detections only where the camera sees; HUD hint at FOV edge; Phase 6 room camera keeps objects tracked outside it |
 | Depth is coarse (about 320x320, 0.2 to ~5 m), no accuracy figure | 3x3 median, `--` on no hit, temporal filter per track, measure error in Phase 2 |
 | Shell blocks controller IR LEDs | Leave LED areas open; compare tracking loss with bare controller |
 | Quest Wi-Fi UDP bursts | Dedicated SSID, low-latency lock, wired PC; TCP fallback |
