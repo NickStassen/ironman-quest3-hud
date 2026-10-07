@@ -194,7 +194,6 @@ Recommended stack:
 4. Quest Wi-Fi UDP can arrive in bursts.
 5. Store review for camera and BLE permissions; sideloading avoids it.
 6. Jetson Nano EOL and the July 2026 Jetson price hike.
-7. IP and export hygiene: keep it clearly a hobby project, separate from day-job work.
 
 ## Sources
 ### Meta: Unity / PCA / depth

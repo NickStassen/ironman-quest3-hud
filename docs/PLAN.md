@@ -1,12 +1,12 @@
 # Project plan: Iron Man HUD on Meta Quest 3
 
-_Plan written Oct 6, 2026. Facts, versions and figures come from [RESEARCH.md](RESEARCH.md) (web research as of Oct 6, 2026). Effort and calendar numbers are estimates. Latency, FPS and accuracy numbers are things to measure, not known values._
+_Plan written Oct 6, 2026. Facts, versions and figures come from [RESEARCH.md](RESEARCH.md) (web research as of Oct 6, 2026). Effort numbers are estimates. Latency, FPS and accuracy numbers are things to measure, not known values._
 
 ## Goal
 
 A mixed-reality HUD on a Meta Quest 3 that detects everyday objects and draws world-locked overlays (box, label, distance, target lock) on passthrough. A 3D-printed repulsor prop aims at a detected object and fires a VR "blast" at it.
 
-Hobby project, evenings and weekends. Kept separate from day-job work.
+Personal hobby project.
 
 ### Demo definition
 
@@ -77,7 +77,7 @@ Key design rules:
 
 ## Phases
 
-Effort units: **E** = a weeknight evening (about 2 to 3 h), **W** = a weekend day (about 5 to 6 h). All effort figures are estimates for someone new to Unity and Quest.
+Effort units: **E** = a short session (about 2 to 3 h), **W** = a long session (about 5 to 6 h). All effort figures are estimates for someone new to Unity and Quest.
 
 ### Phase 0: Quest dev setup
 
@@ -231,14 +231,6 @@ Acceptance:
 
 Effort: open-ended.
 
-### Rough calendar (estimate)
-
-| Window | Capacity | Plan |
-|---|---|---|
-| Oct 6 to Oct 25 | Some evenings and weekends | Phases 0 and 1 |
-| Oct 26 to Nov 15 | Wedding Oct 31; assume little or none | Pause. Optional: print shell test pieces |
-| Nov 16 onward | New job; reduced evenings at first | Phases 2 and 3 (v1), then 4, then 5 |
-
 ## Repo layout
 
 ```
@@ -266,8 +258,7 @@ Add a Unity `.gitignore` (Library/, Temp/, Builds/) and Git LFS for large binari
 | WebRTC may not carry per-frame id/timestamp cleanly | Check how QuestVisionStream maps frames; side data channel with frame id if needed |
 | SDK version churn, old tutorials | Pin versions in `docs/SETUP.md`; prefer Meta docs and official samples |
 | BLE behaviour on Horizon OS unverified | Sideload only; measure interval and latency early in Phase 4 |
-| Limited time (wedding, new job) | Small phases, each ending in something that runs; pause cleanly |
-| IP hygiene with the new job | Keep it clearly a hobby project on personal hardware and time; check the new employer's side-project policy |
+| Limited time | Small phases, each ending in something that runs; pause cleanly |
 | Jetson Nano EOL and Jetson price hike | Jetson stays optional (Phase 6) |
 
 ## Open questions
@@ -293,7 +284,6 @@ Add a Unity `.gitignore` (Library/, Temp/, Builds/) and Git LFS for large binari
 - [ ] Optional: PCA preview in the Editor over Meta Horizon Link v2.1+.
 - [ ] Add `.gitignore`, Git LFS and the empty folder skeleton; start `docs/SETUP.md`.
 - [ ] Note the first rough impressions (does detection feel live or laggy?) in `docs/MEASUREMENTS.md`.
-- [ ] Read the new employer's side-project/IP policy before Nov 16.
 
 ## Links
 
