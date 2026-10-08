@@ -36,3 +36,10 @@ Assets/Resources/yolo.onnx
 Assets/Resources/yolo.onnx.meta
 Assets/Models/
 Assets/Models.meta
+
+# Linux-only patched copy of Meta XR Core SDK 85.0.0 (tools/patch-meta-sdk-linux.sh), not committed
+Packages/com.meta.xr.sdk.core/
+
+# Build scratch and the lock file (it records the Linux-only embedded Meta SDK; manifest.json pins exact versions)
+.utmp/
+Packages/packages-lock.json
