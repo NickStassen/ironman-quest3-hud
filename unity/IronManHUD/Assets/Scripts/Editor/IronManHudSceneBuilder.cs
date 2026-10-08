@@ -42,7 +42,8 @@ namespace IronManHud.EditorTools
                 manager = rig.AddComponent<OVRManager>();
             }
             manager.isInsightPassthroughEnabled = true;
-            EditorUtility.SetDirty(manager);
+            // Edits to a prefab instance are only saved with the scene once recorded as overrides.
+            PrefabUtility.RecordPrefabInstancePropertyModifications(manager);
 
             if (rig.GetComponentInChildren<OVRPassthroughLayer>() == null)
             {
@@ -53,7 +54,7 @@ namespace IronManHud.EditorTools
             {
                 cam.clearFlags = CameraClearFlags.SolidColor;
                 cam.backgroundColor = new Color(0f, 0f, 0f, 0f);
-                EditorUtility.SetDirty(cam);
+                PrefabUtility.RecordPrefabInstancePropertyModifications(cam);
             }
 
             var appGo = new GameObject("IronManHUD");
@@ -79,10 +80,30 @@ namespace IronManHud.EditorTools
             }
             EditorBuildSettings.scenes = scenes.ToArray();
 
+            ConfigureMetaProject();
+
             Debug.Log("[IronManHud] Created " + ScenePath + (model != null ? " (model assigned)" : " (no model found at " + DefaultModelPath + "; HUD will run without detection)"));
             EditorUtility.DisplayDialog("IronManHUD",
                 "Scene created at " + ScenePath + " and added to Build Settings.\n\nNext: Meta > Tools > Project Setup Tool > Fix All, then File > Build And Run.",
                 "OK");
+        }
+
+        /// <summary>
+        /// Meta's manifest regeneration (Project Setup Tool fixes, Meta > Tools > Update AndroidManifest) removes
+        /// HEADSET_CAMERA, USE_SCENE and PASSTHROUGH unless these project settings are on. The tool only enables
+        /// camera access when a PassthroughCameraAccess component is in the scene, and ours is created at runtime.
+        /// </summary>
+        private static void ConfigureMetaProject()
+        {
+            var cfg = OVRProjectConfig.CachedProjectConfig;
+            cfg.insightPassthroughSupport = OVRProjectConfig.FeatureSupport.Required;
+            cfg.isPassthroughCameraAccessEnabled = true;
+            cfg.sceneSupport = OVRProjectConfig.FeatureSupport.Required;
+            cfg.anchorSupport = OVRProjectConfig.AnchorSupport.Enabled;
+            cfg.systemLoadingScreenBackground = OVRProjectConfig.SystemLoadingScreenBackground.ContextualPassthrough;
+            cfg.targetDeviceTypes = new List<OVRProjectConfig.DeviceType> { OVRProjectConfig.DeviceType.Quest3, OVRProjectConfig.DeviceType.Quest3S };
+            OVRProjectConfig.CommitProjectConfig(cfg);
+            AssetDatabase.SaveAssets();
         }
     }
 }
