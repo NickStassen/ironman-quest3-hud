@@ -24,7 +24,7 @@ Press **X** to show the timing overlay. Look at a cluttered desk for about 60 s 
 |---|---|---|---|---|---|---|
 | CPU, 8 Hz cap (default) | | | | | | |
 | GPUCompute (press **Y**) | | | | | | |
-| Best of the two, 15 Hz cap (Inspector: Max Detection Hz) | | | | | | |
+| Best of the two, 15 Hz cap (Inspector: Max Detection Hz, needs a rebuild) | | | | | | |
 
 - "capture age" = time from camera capture to the overlay update. If it shows `--`, the PCA timestamp isn't wall-clock on-device; use grab->place plus about 20 to 40 ms (Meta's quoted capture latency) and note that.
 - [ ] Does it feel live or laggy? ______
@@ -36,7 +36,7 @@ Press **X** to show the timing overlay. Look at a cluttered desk for about 60 s 
 - [ ] Brackets flicker? (yes / a little / no) ______
 
 ## 4. Distance accuracy (10 min)
-Stand still and put an object at measured distances from the headset front. Read the `x.xx m` label.
+Stand still and put an object at measured distances from the headset front. Read the `x.xx m` label. The label measures from the centre-eye point, which sits a few cm behind the headset front, so expect a small constant offset and note it.
 
 | Object | 0.5 m | 1.0 m | 2.0 m | 3.0 m |
 |---|---|---|---|---|

@@ -7,7 +7,7 @@ A mixed-reality Iron Man-style HUD for the Meta Quest 3, built in Unity. It runs
 
 ## Current state (read carefully)
 - Phases 0 to 2 plus repulsor v0 are written in `unity/IronManHUD/Assets/Scripts/`, but **they have never been opened in a real Unity Editor or run on a headset.** They were only checked against hand-written API stubs, so expect compile errors on the first open. Fixing those is job #1.
-- Pinned versions: Unity **6000.0.66f2** with the built-in render pipeline, Meta XR Core SDK and MRUK **85.0.0**, and Unity Inference Engine **2.2.1** (namespace `Unity.InferenceEngine`, not `Unity.Sentis`). Don't bump versions to make errors go away unless a pinned version is actually broken. If you do bump one, update `docs/SETUP.md`.
+- Pinned versions: Unity **6000.0.84f1** (bumped from 66f2, which doesn't launch on Ubuntu 26.04) with the built-in render pipeline, Meta XR Core SDK and MRUK **85.0.0**, and Unity Inference Engine **2.2.1** (namespace `Unity.InferenceEngine`, not `Unity.Sentis`). Don't bump versions to make errors go away unless a pinned version is actually broken. If you do bump one, update `docs/SETUP.md`.
 - Model: run `tools/get-model.sh` to download Meta's YOLOv9-t into `Assets/Resources/yolo.sentis`. It's git-ignored, so never commit it.
 - Scene: built in code by the menu item **IronManHUD > Create Demo Scene** (`Assets/Scripts/Editor/IronManHudSceneBuilder.cs`). Components are added at runtime by `HudApp`. If the scene is wrong, fix the builder instead of hand-editing a scene file.
 - nicklink hardware isn't available yet. Repulsor input goes through `IRepulsorInput`, and only `TouchRepulsorInput` exists. Leave the BLE path stubbed.
