@@ -10,8 +10,8 @@ namespace IronManHud
     ///
     /// Fire modes (B toggles):
     ///  - Trigger: hold the index trigger to charge, release to fire.
-    ///  - PalmGesture, for the open-hand palm-emitter prop: charges while the palm points roughly where you look and
-    ///    fires on a forward thrust of the hand. The trigger still works in this mode.
+    ///  - PalmGesture, for the open-hand palm-emitter prop: charges while the arm is out in front with the palm pointing
+    ///    roughly where you look, and fires on a forward thrust of the hand. The trigger still works in this mode.
     ///
     /// The emitter direction relative to the controller is calibrated at runtime: point the palm (or the controller)
     /// where you look and click the right thumbstick; hold the click to reset. Saved between runs.
@@ -38,6 +38,8 @@ namespace IronManHud
         [Header("Palm gesture mode")]
         [Tooltip("Charges while the palm points within this angle of the view direction (degrees).")]
         public float GestureAimConeDeg = 35f;
+        [Tooltip("...and the emitter is at least this far in front of the eyes (m), i.e. the arm is raised and out.")]
+        public float GestureMinReach = 0.4f;
         [Tooltip("Forward hand speed along the palm axis that fires (m/s).")]
         public float ThrustSpeed = 1.2f;
 
@@ -129,7 +131,8 @@ namespace IronManHud
 
             bool triggerHeld = tracked && _input.FireHeld;
             bool palmReady = Mode == FireMode.PalmGesture && tracked && _head != null
-                && Vector3.Angle(forward, _head.forward) < GestureAimConeDeg;
+                && Vector3.Angle(forward, _head.forward) < GestureAimConeDeg
+                && Vector3.Dot(origin - _head.position, _head.forward) > GestureMinReach;
 
             if (_cooldown <= 0f && (triggerHeld || palmReady))
             {
@@ -281,7 +284,7 @@ namespace IronManHud
                 ResetCharge();
                 ShowNotice(Mode == FireMode.Trigger
                     ? "Repulsor: TRIGGER mode. Hold to charge, release to fire."
-                    : "Repulsor: PALM mode. Aim your palm where you look to charge, thrust to fire.");
+                    : "Repulsor: PALM mode. Raise your arm, palm where you look, to charge. Push forward to fire.");
             }
 
             if (_input.CalibratePressedThisFrame && _head != null && _input.IsTracked)
