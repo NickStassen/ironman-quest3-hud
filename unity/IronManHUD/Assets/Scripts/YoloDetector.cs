@@ -32,7 +32,7 @@ namespace IronManHud
             public DateTime CaptureTimestamp;
         }
 
-        public float ScoreThreshold = 0.3f;
+        public float ScoreThreshold = 0.4f;
         public float IouThreshold = 0.5f;
         public int MaxDetections = 20;
 

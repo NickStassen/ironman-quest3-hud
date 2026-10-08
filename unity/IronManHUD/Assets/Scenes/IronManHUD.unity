@@ -461,7 +461,7 @@ MonoBehaviour:
   ResourcesModelName: yolo
   Backend: 512
   MaxDetectionHz: 8
-  ScoreThreshold: 0.3
+  ScoreThreshold: 0.4
   IouThreshold: 0.5
   CameraPosition: 0
   CameraResolution: {x: 1280, y: 960}

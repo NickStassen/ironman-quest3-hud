@@ -27,7 +27,8 @@ namespace IronManHud
         public BackendType Backend = BackendType.CPU;
         [Range(0.5f, 30f), Tooltip("Upper limit on how often inference starts (Hz).")]
         public float MaxDetectionHz = 8f;
-        [Range(0f, 1f)] public float ScoreThreshold = 0.3f;
+        [Range(0f, 1f), Tooltip("0.3 let through blank-wall 'bird'/'kite' false positives on device.")]
+        public float ScoreThreshold = 0.4f;
         [Range(0f, 1f)] public float IouThreshold = 0.5f;
 
         [Header("Camera (Passthrough Camera API)")]
