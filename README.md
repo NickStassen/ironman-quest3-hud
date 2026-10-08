@@ -53,6 +53,7 @@ Controls: **right trigger** hold to charge, release to fire; **B** trigger / pal
 - [docs/TEST-TONIGHT.md](docs/TEST-TONIGHT.md): first on-device test checklist and numbers to record
 - [docs/MEASUREMENTS.md](docs/MEASUREMENTS.md): on-device timing and observations
 - [docs/PLAN.md](docs/PLAN.md): phased plan, architecture, risks
+- [cad/repulsor](cad/repulsor/README.md): palm-emitter repulsor shell (OpenSCAD, PETG, adjustable fit, nicklink bay), v0 untested
 - [docs/RESEARCH.md](docs/RESEARCH.md): research brief (as of Oct 6, 2026)
 
 ## Related repos
