@@ -43,3 +43,5 @@ Packages/com.meta.xr.sdk.core/
 # Build scratch and the lock file (it records the Linux-only embedded Meta SDK; manifest.json pins exact versions)
 .utmp/
 Packages/packages-lock.json
+Assets/StreamingAssets/
+Assets/StreamingAssets.meta
