@@ -51,9 +51,10 @@ Stand still and put an object at measured distances from the headset front. Read
 - [ ] Turn your head about 90 degrees and back at normal speed. How far do the brackets drift off the object (cm, by eye)? ______
 - [ ] Walk 1 to 2 m to the side. Do brackets stay on the object? ______
 
-## 6. Repulsor v0 (5 min)
-- [ ] Right trigger shows a beam from the controller with a haptic kick on press.
-- [ ] Aim at a detected object: brackets turn red, status shows `LOCK #N CLASS`, light continuous rumble.
+## 6. Repulsor v1 (5 min)
+- [ ] Hold the right trigger: whine rises, emitter glows, haptics build, a faint guide line appears (red when locked). Release: a bolt flies, with a blast sound and haptic kick.
+- [ ] Aim at a detected object: brackets pulse red, status shows `LOCK #N CLASS`. On impact: flash, shockwave, sparks, `NEUTRALIZED`, `HIT xN`, and the HITS counter goes up. A miss stops at the first real surface.
+- [ ] Press B for PALM mode: aim where you look to charge, thrust forward to fire. Right stick click aligns the emitter (hold to reset).
 - [ ] Lock success at 1 m over 10 tries: __/10. At 3 m: __/10.
 
 ## 7. Pull the log

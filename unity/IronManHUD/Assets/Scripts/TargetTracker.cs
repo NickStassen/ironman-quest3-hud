@@ -27,8 +27,10 @@ namespace IronManHud
             public bool HasDepth;
             public int Hits;
             public float LastSeen;
-            public float HighlightUntil;
             public int MatchedBatch;
+            /// <summary>Time.time of the last repulsor hit, or negative if never hit.</summary>
+            public float HitTime = -100f;
+            public int TimesHit;
             public TargetMarker Marker;
         }
 
@@ -53,6 +55,9 @@ namespace IronManHud
         private int _batch;
 
         public IReadOnlyList<Target> Targets => _targets;
+        /// <summary>Target the repulsor is locked on (set by RepulsorController each frame), or null.</summary>
+        public Target LockedTarget { get; set; }
+        public int TotalHits { get; private set; }
         public int LastDepthHits { get; private set; }
         public int LastDepthMisses { get; private set; }
         public string LastDepthStatus { get; private set; } = "--";
@@ -205,20 +210,14 @@ namespace IronManHud
             return new Vector2(Mathf.Clamp(w, 0.05f, 5f), Mathf.Clamp(h, 0.05f, 5f));
         }
 
-        /// <summary>Marks a target as hit by the repulsor.</summary>
-        public void Highlight(Target target, float seconds)
-        {
-            if (target != null)
-            {
-                target.HighlightUntil = Time.time + seconds;
-            }
-        }
-
-        /// <summary>Closest visible target the ray passes near (within max(radius, half the target size)).</summary>
-        public Target RaycastTargets(Ray ray, float minRadius, out float distanceAlongRay)
+        /// <summary>
+        /// Visible target best aligned with the ray: within coneDeg of the axis, after allowing for the target's own
+        /// angular radius, and within maxRange. Null if none.
+        /// </summary>
+        public Target FindLockTarget(Ray ray, float coneDeg, float maxRange)
         {
             Target best = null;
-            distanceAlongRay = float.MaxValue;
+            float bestAngle = coneDeg;
             Vector3 dir = ray.direction.normalized;
             foreach (var t in _targets)
             {
@@ -227,20 +226,45 @@ namespace IronManHud
                     continue;
                 }
                 Vector3 toTarget = t.Position - ray.origin;
-                float along = Vector3.Dot(toTarget, dir);
-                if (along <= 0f)
+                float dist = toTarget.magnitude;
+                if (dist < 0.05f || dist > maxRange || Vector3.Dot(toTarget, dir) <= 0f)
                 {
                     continue;
                 }
-                float perp = (toTarget - dir * along).magnitude;
-                float radius = Mathf.Max(minRadius, 0.5f * Mathf.Min(t.SizeM.x, t.SizeM.y));
-                if (perp <= radius && along < distanceAlongRay)
+                float radiusDeg = Mathf.Atan2(0.5f * Mathf.Min(t.SizeM.x, t.SizeM.y), dist) * Mathf.Rad2Deg;
+                float angle = Vector3.Angle(dir, toTarget) - radiusDeg;
+                if (angle < bestAngle)
                 {
-                    distanceAlongRay = along;
+                    bestAngle = angle;
                     best = t;
                 }
             }
             return best;
+        }
+
+        public bool Contains(Target target) => target != null && _targets.Contains(target);
+
+        public void RegisterHit(Target target)
+        {
+            if (target == null)
+            {
+                return;
+            }
+            target.HitTime = Time.time;
+            target.TimesHit++;
+            TotalHits++;
+        }
+
+        /// <summary>First real surface along the ray (MRUK depth raycast), if depth is available.</summary>
+        public bool TryRaycastEnvironment(Ray ray, float maxDistance, out Vector3 point)
+        {
+            if (_raycaster != null && _raycaster.isActiveAndEnabled && _raycaster.Raycast(ray, out EnvironmentRaycastHit hit, maxDistance))
+            {
+                point = hit.point;
+                return true;
+            }
+            point = default;
+            return false;
         }
 
         private void LateUpdate()
@@ -271,10 +295,11 @@ namespace IronManHud
                     {
                         float dist = Vector3.Distance(_head.position, t.Position);
                         string distText = t.HasDepth ? dist.ToString("0.00", CultureInfo.InvariantCulture) + " m" : "-- m";
+                        string hits = t.TimesHit > 0 ? "  HIT x" + t.TimesHit : "";
                         float age = now - t.LastSeen;
                         t.Marker.UpdateMarker(t.Position, t.SizeM, _head.position,
-                            string.Format(CultureInfo.InvariantCulture, "#{0} {1} {2:0}%  {3}", t.Id, t.Label.ToUpperInvariant(), t.Score * 100f, distText),
-                            now < t.HighlightUntil, 1f - Mathf.Clamp01(age / TimeoutSeconds) * 0.6f);
+                            string.Format(CultureInfo.InvariantCulture, "#{0} {1} {2:0}%  {3}{4}", t.Id, t.Label.ToUpperInvariant(), t.Score * 100f, distText, hits),
+                            t == LockedTarget, now - t.HitTime, 1f - Mathf.Clamp01(age / TimeoutSeconds) * 0.6f);
                     }
                 }
             }

@@ -105,7 +105,9 @@ On Linux, Fix All logs an `ArgumentException: Invalid path` from the Meta XR Sim
 3. You should see passthrough with the cyan HUD frame, a clock, FPS and the status line. Point at a chair, cup, laptop, bottle or person.
 
 Controls:
-- **Right trigger**: repulsor beam plus haptics. A target the beam crosses turns red and shows LOCK.
+- **Right trigger**: hold to charge the repulsor, release to fire a bolt. A target inside the lock cone turns red and shows LOCK; a hit shows NEUTRALIZED.
+- **B** (right): switch TRIGGER / PALM mode. PALM: point the palm (controller) where you look to charge, push the hand forward to fire.
+- **Right thumbstick click**: align the emitter with your view (point the palm at what you're looking at, then click). Hold for 1.5 s to reset. Saved between runs.
 - **X** (left): toggle the timing overlay.
 - **Y** (left): switch inference CPU / GPUCompute.
 

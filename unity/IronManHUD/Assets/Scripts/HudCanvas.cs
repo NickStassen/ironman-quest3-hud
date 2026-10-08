@@ -63,7 +63,7 @@ namespace IronManHud
 
             _clock = UiFactory.CreateText("Clock", root, 26, TextAnchor.UpperLeft, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(24f, -18f), new Vector2(300f, 40f), UiFactory.HudCyan);
             _fps = UiFactory.CreateText("FPS", root, 26, TextAnchor.UpperRight, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-24f, -18f), new Vector2(300f, 40f), UiFactory.HudCyan);
-            _status = UiFactory.CreateText("Status", root, 22, TextAnchor.LowerCenter, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 18f), new Vector2(760f, 60f), UiFactory.HudCyan);
+            _status = UiFactory.CreateText("Status", root, 22, TextAnchor.LowerCenter, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 18f), new Vector2(880f, 60f), UiFactory.HudCyan);
             _debug = UiFactory.CreateText("Debug", root, 16, TextAnchor.LowerLeft, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(24f, 84f), new Vector2(560f, 200f), new Color(0.75f, 1f, 1f, 0.9f));
             _centerMessage = UiFactory.CreateText("CenterMessage", root, 24, TextAnchor.MiddleCenter, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 110f), new Vector2(760f, 140f), UiFactory.HudAmber);
             _centerMessage.gameObject.SetActive(false);

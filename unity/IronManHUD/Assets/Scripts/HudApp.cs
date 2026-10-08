@@ -84,8 +84,9 @@ namespace IronManHud
             _tracker.Init(_head, _labels);
 
             var controllerAnchor = _rig != null ? _rig.rightControllerAnchor : null;
+            var trackingSpace = _rig != null ? _rig.trackingSpace : null;
             _repulsor = new GameObject("Repulsor").AddComponent<RepulsorController>();
-            _repulsor.Init(new TouchRepulsorInput(controllerAnchor), _tracker);
+            _repulsor.Init(new TouchRepulsorInput(controllerAnchor, trackingSpace), _tracker, _head);
 
             if (WriteLatencyCsv)
             {
@@ -122,6 +123,12 @@ namespace IronManHud
                 // Same approach as Meta's PCA samples: an underlay passthrough layer created at runtime.
                 var ptGo = new GameObject(nameof(OVRPassthroughLayer));
                 ptGo.AddComponent<OVRPassthroughLayer>();
+            }
+
+            // Repulsor sounds are 3D one-shots; they need a listener on the head.
+            if (FindAnyObjectByType<AudioListener>() == null)
+            {
+                _head.gameObject.AddComponent<AudioListener>();
             }
 
             // Passthrough shows wherever the eye buffer is transparent.
@@ -321,18 +328,27 @@ namespace IronManHud
             }
             UpdateCameraMessage();
 
-            // Prominent message: first problem wins.
+            // Prominent message: first problem wins; otherwise a short repulsor notice (calibration, mode).
             string problem = _bootMessage ?? _cameraMessage ?? _modelMessage;
-            _hud.SetCenterMessage(problem, _bootMessage == null && problem != null && _cameraMessage != null);
+            string notice = _repulsor != null ? _repulsor.Notice : null;
+            _hud.SetCenterMessage(problem ?? notice, _bootMessage == null && problem != null && _cameraMessage != null);
 
-            bool locked = _repulsor != null && _repulsor.LastHit != null;
-            _hud.SetReticleLocked(locked);
+            var lockedTarget = _repulsor != null ? _repulsor.LockedTarget : null;
+            _hud.SetReticleLocked(lockedTarget != null);
 
             string cam = _pca != null && _pca.IsPlaying ? $"CAM {_pca.CurrentResolution.x}x{_pca.CurrentResolution.y}" : "CAM --";
             string model = _detector != null ? $"YOLO {_detector.Backend}" : "YOLO off";
             int targets = _tracker != null ? _tracker.Targets.Count : 0;
-            string lockText = locked ? $"  |  LOCK #{_repulsor.LastHit.Id} {_repulsor.LastHit.Label.ToUpperInvariant()}" : "";
-            _hud.SetStatus($"{cam}  |  {model}  |  {(_raycaster != null ? "DEPTH on" : "DEPTH --")}  |  TARGETS {targets}{lockText}");
+            string repulsor = "";
+            if (_repulsor != null)
+            {
+                string mode = _repulsor.Mode == RepulsorController.FireMode.Trigger ? "TRIG" : "PALM";
+                string charge = _repulsor.IsCharging ? $" {_repulsor.Charge * 100f:0}%" : "";
+                repulsor = $"REPULSOR {mode}{charge}  |  HITS {_repulsor.Hits}";
+            }
+            string lockText = lockedTarget != null ? $"  |  LOCK #{lockedTarget.Id} {lockedTarget.Label.ToUpperInvariant()}" : "";
+            // Two lines: system state, then the repulsor (keeps the lock text from wrapping mid-line).
+            _hud.SetStatus($"{repulsor}{lockText}\n{cam}  |  {model}  |  {(_raycaster != null ? "DEPTH on" : "DEPTH --")}  |  TARGETS {targets}");
 
             if (_hud.DebugVisible && Time.unscaledTime >= _nextDebugRefresh)
             {
@@ -387,7 +403,7 @@ namespace IronManHud
             {
                 _sb.AppendFormat(ci, "  |  model {0} {1}x{2}", _detector.FormatName, _detector.InputSize.x, _detector.InputSize.y);
             }
-            _sb.Append("\n[X] debug  [Y] CPU/GPU  [R trigger] repulsor");
+            _sb.Append("\n[X] debug  [Y] CPU/GPU  [R trigger] charge/fire  [B] trigger/palm  [R stick click] align (hold: reset)");
             return _sb.ToString();
         }
 

@@ -6,6 +6,9 @@ namespace IronManHud
     /// <summary>World-locked bracket + label for one target. 1 canvas unit = 1 mm.</summary>
     public class TargetMarker : MonoBehaviour
     {
+        /// <summary>How long the hit reaction plays (s).</summary>
+        public const float HitFxSeconds = 1.2f;
+
         private RectTransform _rect;
         private Image[] _brackets;
         private Text _label;
@@ -24,7 +27,9 @@ namespace IronManHud
             return marker;
         }
 
-        public void UpdateMarker(Vector3 position, Vector2 sizeM, Vector3 headPosition, string label, bool highlighted, float alpha)
+        /// <param name="locked">The repulsor is locked on this target: red, pulsing brackets.</param>
+        /// <param name="hitAge">Seconds since the last repulsor hit (negative or large = none): flash, pop, NEUTRALIZED.</param>
+        public void UpdateMarker(Vector3 position, Vector2 sizeM, Vector3 headPosition, string label, bool locked, float hitAge, float alpha)
         {
             transform.position = position;
             Vector3 fromHead = position - headPosition;
@@ -32,7 +37,22 @@ namespace IronManHud
             {
                 transform.rotation = Quaternion.LookRotation(fromHead, Vector3.up);
             }
-            _rect.sizeDelta = sizeM * 1000f;
+            float scale = 1f;
+            var color = UiFactory.HudCyan;
+            if (hitAge >= 0f && hitAge < HitFxSeconds)
+            {
+                float k = hitAge / HitFxSeconds;
+                scale = 1f + 0.45f * Mathf.Sin(k * Mathf.PI);
+                color = k < 0.12f ? Color.white : Color.Lerp(UiFactory.HudAmber, UiFactory.HudRed, k);
+                label = "NEUTRALIZED  " + label;
+                alpha = 1f;
+            }
+            else if (locked)
+            {
+                scale = 0.9f + 0.1f * Mathf.Sin(Time.time * 14f);
+                color = UiFactory.HudRed;
+            }
+            _rect.sizeDelta = sizeM * 1000f * scale;
 
             // Keep the label readable regardless of distance: ~ constant angular size.
             float dist = fromHead.magnitude;
@@ -40,7 +60,6 @@ namespace IronManHud
             _label.rectTransform.localScale = Vector3.one * labelScale;
             _label.text = label;
 
-            var color = highlighted ? UiFactory.HudRed : UiFactory.HudCyan;
             foreach (var b in _brackets)
             {
                 b.color = color;

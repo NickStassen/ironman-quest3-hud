@@ -37,3 +37,14 @@ Numbers from on-device runs. Method and checklist: [TEST-TONIGHT.md](TEST-TONIGH
 
 ### Not measured yet
 - GPUCompute backend (press Y), distance accuracy against a tape measure, world-lock drift on head turns, ID switches per minute, lock success rate.
+
+## Run 2: repulsor v1 (Oct 7, 2026)
+
+Same setup as run 1, plus the head-locked 70-degree curved HUD and repulsor v1. 28 s headset capture, trigger mode.
+
+- Charge, lock, bolt, impact and hit reaction all work on device. Charge whine, guide line (red when locked), shockwave ring, sparks and `NEUTRALIZED` / `HIT xN` show as designed; HITS went from 2 to 6 in the clip.
+- App frame time held 13.4 to 15.2 ms (72 FPS) with bolts, particles and the debug overlay on.
+- Timing unchanged from run 1 (infer p50 about 190 ms, capture age p50 about 265 ms while the effects ran).
+- False positives: `bird` (32 to 69%) and `kite` (39 to 45%) on a blank wall and ceiling corner at about 3 m. ScoreThreshold raised from 0.30 to 0.40.
+- The status line wrapped when locked; it is now two lines (repulsor, then system).
+- Palm-gesture mode and emitter calibration not yet tried on device.
