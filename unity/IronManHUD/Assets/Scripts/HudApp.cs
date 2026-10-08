@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Globalization;
+using System.Runtime.InteropServices;
 using System.Text;
 using Meta.XR;
 using Unity.InferenceEngine;
@@ -54,6 +55,10 @@ namespace IronManHud
         private string _depthMessage = "depth: waiting for scene permission";
         private bool _cameraPermissionRequested;
         private string _bootMessage;
+        private float _nextDebugRefresh;
+
+        [DllImport("OVRPlugin", CallingConvention = CallingConvention.Cdecl)]
+        private static extern OVRPlugin.Result ovrp_GetNodePoseStateAtTime(double time, OVRPlugin.Node nodeId, out OVRPlugin.PoseStatef nodePoseState);
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void AutoCreate()
@@ -241,6 +246,12 @@ namespace IronManHud
                 return;
             }
 
+            // Same guard as Meta's sample: while head tracking is lost, GetCameraPose() is built from an identity
+            // head pose and would place targets near the origin.
+            if (!ovrp_GetNodePoseStateAtTime(OVRPlugin.GetTimeInSeconds(), OVRPlugin.Node.Head, out _).IsSuccess())
+            {
+                return;
+            }
             Pose cameraPose = _pca.GetCameraPose();
             if (cameraPose.rotation.x == 0f && cameraPose.rotation.y == 0f && cameraPose.rotation.z == 0f && cameraPose.rotation.w == 0f)
             {
@@ -293,6 +304,7 @@ namespace IronManHud
                 try
                 {
                     _detector.SetBackend(next);
+                    _stats.ResetDetectionStats(); // don't mix CPU and GPU samples in the on-screen percentiles
                 }
                 catch (Exception e)
                 {
@@ -322,8 +334,10 @@ namespace IronManHud
             string lockText = locked ? $"  |  LOCK #{_repulsor.LastHit.Id} {_repulsor.LastHit.Label.ToUpperInvariant()}" : "";
             _hud.SetStatus($"{cam}  |  {model}  |  {(_raycaster != null ? "DEPTH on" : "DEPTH --")}  |  TARGETS {targets}{lockText}");
 
-            if (_hud.DebugVisible)
+            if (_hud.DebugVisible && Time.unscaledTime >= _nextDebugRefresh)
             {
+                // 5 Hz is plenty to read, and keeps the overlay from skewing the frame times it reports.
+                _nextDebugRefresh = Time.unscaledTime + 0.2f;
                 _hud.SetDebug(BuildDebugText());
             }
         }

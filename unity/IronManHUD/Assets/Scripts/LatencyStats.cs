@@ -10,6 +10,7 @@ namespace IronManHud
     public class RollingStat
     {
         private readonly float[] _samples;
+        private float[] _sorted;
         private int _count;
         private int _next;
 
@@ -39,11 +40,18 @@ namespace IronManHud
             {
                 return -1f;
             }
-            var copy = new float[_count];
-            Array.Copy(_samples, copy, _count);
-            Array.Sort(copy);
+            _sorted ??= new float[_samples.Length];
+            Array.Copy(_samples, _sorted, _count);
+            Array.Sort(_sorted, 0, _count);
             int idx = Mathf.Clamp(Mathf.RoundToInt(p * (_count - 1)), 0, _count - 1);
-            return copy[idx];
+            return _sorted[idx];
+        }
+
+        public void Reset()
+        {
+            _count = 0;
+            _next = 0;
+            Last = -1f;
         }
 
         public string Format()
@@ -82,7 +90,7 @@ namespace IronManHud
             {
                 CsvPath = Path.Combine(Application.persistentDataPath,
                     "latency_" + DateTime.Now.ToString("yyyyMMdd_HHmmss", CultureInfo.InvariantCulture) + ".csv");
-                _writer = new StreamWriter(CsvPath, false, Encoding.UTF8);
+                _writer = new StreamWriter(CsvPath, false, new UTF8Encoding(false)); // no BOM, so the first header parses cleanly
                 _writer.WriteLine("t_s,backend,detections,preprocess_ms,inference_ms,postprocess_ms,pipeline_ms,capture_age_ms,app_frame_ms");
                 Debug.Log("[IronManHud] Latency CSV: " + CsvPath);
             }
@@ -94,6 +102,18 @@ namespace IronManHud
         }
 
         public void RecordFrame(float deltaMs) => FrameMs.Add(deltaMs);
+
+        /// <summary>Clears the on-screen detection stats (e.g. after a backend switch). The CSV is unaffected.</summary>
+        public void ResetDetectionStats()
+        {
+            PreprocessMs.Reset();
+            InferenceMs.Reset();
+            PostprocessMs.Reset();
+            PipelineMs.Reset();
+            CaptureAgeMs.Reset();
+            DetectionHz.Reset();
+            _lastDetectionTime = -1;
+        }
 
         /// <param name="captureAgeMs">Negative when unknown.</param>
         public void RecordDetection(string backend, int detections, float preMs, float infMs, float postMs, float pipelineMs, float captureAgeMs)

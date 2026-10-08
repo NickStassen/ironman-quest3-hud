@@ -56,7 +56,13 @@ namespace IronManHud
             int w = shape.rank >= 4 ? shape.Get(3) : -1;
             // Dynamic dims come back as -1; fall back to the usual YOLO input size.
             InputSize = new Vector2Int(w > 0 ? w : 640, h > 0 ? h : 640);
-            _metaFormat = _model.outputs.Count >= 3;
+            int outputCount = _model.outputs.Count;
+            if (outputCount != 3 && outputCount != 1)
+            {
+                throw new NotSupportedException(
+                    $"YOLO model has {outputCount} outputs; expected 3 (Meta: boxes, class ids, scores) or 1 (Ultralytics [1,4+C,N]).");
+            }
+            _metaFormat = outputCount == 3;
             _input = new Tensor<float>(new TensorShape(1, 3, InputSize.y, InputSize.x));
             CreateWorker(backend);
         }
@@ -76,6 +82,8 @@ namespace IronManHud
                 return;
             }
             CreateWorker(backend);
+            // Without this the first run on the new backend compiles kernels and records an outlier time.
+            WarmUp();
         }
 
         /// <summary>
@@ -115,37 +123,42 @@ namespace IronManHud
                 GrabTime = Time.realtimeSinceStartupAsDouble,
             };
 
-            double t0 = Time.realtimeSinceStartupAsDouble;
-            TextureConverter.ToTensor(source, _input, new TextureTransform());
-            _worker.Schedule(_input);
-            double t1 = Time.realtimeSinceStartupAsDouble;
-            result.PreprocessMs = (float)((t1 - t0) * 1000.0);
-
             Tensor<float> boxes = null;
             Tensor<int> classIds = null;
             Tensor<float> scores = null;
             Tensor<float> raw = null;
             try
             {
+                double t0 = Time.realtimeSinceStartupAsDouble;
+                TextureConverter.ToTensor(source, _input, new TextureTransform());
+                if (Backend == BackendType.CPU)
+                {
+                    // ToTensor runs on the GPU; without this, Schedule on the CPU backend blocks the main thread
+                    // until the input has been read back. Let the readback finish over a few frames instead.
+                    _input.ReadbackRequest();
+                    while (!_input.IsReadbackRequestDone()) yield return null;
+                }
+                _worker.Schedule(_input);
+                double t1 = Time.realtimeSinceStartupAsDouble;
+                result.PreprocessMs = (float)((t1 - t0) * 1000.0);
+
+                // Start every output readback before waiting so they overlap instead of costing a frame each.
+                int outputCount = _metaFormat ? 3 : 1;
+                for (int i = 0; i < outputCount; i++)
+                {
+                    _worker.PeekOutput(i).ReadbackRequest();
+                }
+                while (!OutputsReady(outputCount)) yield return null;
+
                 if (_metaFormat)
                 {
-                    var boxesAwaiter = (_worker.PeekOutput(0) as Tensor<float>).ReadbackAndCloneAsync().GetAwaiter();
-                    while (!boxesAwaiter.IsCompleted) yield return null;
-                    boxes = boxesAwaiter.GetResult();
-
-                    var idsAwaiter = (_worker.PeekOutput(1) as Tensor<int>).ReadbackAndCloneAsync().GetAwaiter();
-                    while (!idsAwaiter.IsCompleted) yield return null;
-                    classIds = idsAwaiter.GetResult();
-
-                    var scoresAwaiter = (_worker.PeekOutput(2) as Tensor<float>).ReadbackAndCloneAsync().GetAwaiter();
-                    while (!scoresAwaiter.IsCompleted) yield return null;
-                    scores = scoresAwaiter.GetResult();
+                    boxes = (_worker.PeekOutput(0) as Tensor<float>).ReadbackAndClone();
+                    classIds = (_worker.PeekOutput(1) as Tensor<int>).ReadbackAndClone();
+                    scores = (_worker.PeekOutput(2) as Tensor<float>).ReadbackAndClone();
                 }
                 else
                 {
-                    var rawAwaiter = (_worker.PeekOutput(0) as Tensor<float>).ReadbackAndCloneAsync().GetAwaiter();
-                    while (!rawAwaiter.IsCompleted) yield return null;
-                    raw = rawAwaiter.GetResult();
+                    raw = (_worker.PeekOutput(0) as Tensor<float>).ReadbackAndClone();
                 }
 
                 double t2 = Time.realtimeSinceStartupAsDouble;
@@ -176,6 +189,18 @@ namespace IronManHud
             onDone?.Invoke(result);
         }
 
+        private bool OutputsReady(int count)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                if (!_worker.PeekOutput(i).IsReadbackRequestDone())
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
         private void DecodeMeta(Tensor<float> boxes, Tensor<int> classIds, Tensor<float> scores)
         {
             if (boxes == null || classIds == null || scores == null || boxes.shape.rank < 2)
@@ -187,9 +212,10 @@ namespace IronManHud
             {
                 return;
             }
-            var b = boxes.DownloadToArray();
-            var c = classIds.DownloadToArray();
-            var s = scores.DownloadToArray();
+            // Spans over the cloned CPU tensors: no per-frame array allocations.
+            var b = boxes.AsReadOnlySpan();
+            var c = classIds.AsReadOnlySpan();
+            var s = scores.AsReadOnlySpan();
             for (int i = 0; i < n; i++)
             {
                 if (s[i] < ScoreThreshold)
@@ -222,7 +248,7 @@ namespace IronManHud
             {
                 return;
             }
-            var data = raw.DownloadToArray();
+            var data = raw.AsReadOnlySpan();
             for (int i = 0; i < n; i++)
             {
                 int best = -1;

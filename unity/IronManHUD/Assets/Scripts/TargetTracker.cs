@@ -28,6 +28,7 @@ namespace IronManHud
             public int Hits;
             public float LastSeen;
             public float HighlightUntil;
+            public int MatchedBatch;
             public TargetMarker Marker;
         }
 
@@ -49,6 +50,7 @@ namespace IronManHud
         private Transform _head;
         private string[] _labels;
         private int _nextId = 1;
+        private int _batch;
 
         public IReadOnlyList<Target> Targets => _targets;
         public int LastDepthHits { get; private set; }
@@ -76,6 +78,7 @@ namespace IronManHud
             LastDepthHits = 0;
             LastDepthMisses = 0;
             float now = Time.time;
+            _batch++;
 
             foreach (var det in detections)
             {
@@ -94,7 +97,8 @@ namespace IronManHud
                 float bestAngle = AssociationAngleDeg;
                 foreach (var t in _targets)
                 {
-                    if (t.ClassId != det.ClassId)
+                    // One detection per target per batch, so two nearby objects of the same class don't merge.
+                    if (t.ClassId != det.ClassId || t.MatchedBatch == _batch)
                     {
                         continue;
                     }
@@ -129,12 +133,19 @@ namespace IronManHud
                     };
                     _targets.Add(match);
                 }
+                else if (hasDepth && !match.HasDepth)
+                {
+                    // First real depth: jump there instead of easing in from the fallback distance.
+                    match.Position = worldPos;
+                    match.SizeM = sizeM;
+                }
                 else
                 {
                     float a = (hasDepth || !match.HasDepth) ? PositionAlpha : PositionAlpha * 0.5f;
                     match.Position = Vector3.Lerp(match.Position, worldPos, a);
                     match.SizeM = Vector2.Lerp(match.SizeM, sizeM, a);
                 }
+                match.MatchedBatch = _batch;
                 match.HasDepth = hasDepth || match.HasDepth;
                 match.Score = det.Score;
                 match.Hits++;

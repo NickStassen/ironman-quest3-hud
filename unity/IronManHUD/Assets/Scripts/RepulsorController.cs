@@ -88,8 +88,11 @@ namespace IronManHud
             {
                 length = along;
                 _tracker.Highlight(LastHit, 0.5f);
-                // Light continuous rumble while locked on a target.
-                _input.Pulse(0.35f, 0.05f);
+                // Light continuous rumble while locked on a target, without cutting short the trigger kick.
+                if (_flash < 0.5f)
+                {
+                    _input.Pulse(0.35f, 0.05f);
+                }
             }
 
             float flicker = 0.85f + 0.15f * Mathf.PerlinNoise(Time.time * 25f, 0f);
