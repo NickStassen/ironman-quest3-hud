@@ -133,6 +133,7 @@ adb pull /sdcard/Android/data/<package id>/files/ ./latency/
 | `TextureTransform.SetDimensions is obsolete` warning | Not used here; harmless if you see it from other code. |
 | Big stall at startup | Expected: the first inference compiles the model ("Warming up detector..."). |
 | One object labelled twice (e.g. `TV` + `LAPTOP`) | `HudApp > Cross Class Suppression` (default on) with `Cross Class Iou Threshold` (default 0.6). Lower the threshold if duplicates remain; raise it if real neighbouring objects disappear. Duplicate same-class tracks are merged by `TargetTracker` (`DuplicateAngleDeg` 4, `DuplicateBatchesToMerge` 2). |
+| Your own hand shows up as a `person` target | `HudApp > Min Person Distance` (default 0.5 m) drops near-field `person` boxes that have a depth hit. Raise it slightly if hands still get tagged; set 0 to disable. |
 | Low FPS while detecting | Lower `HudApp > Max Detection Hz` (default 8), try Y to swap CPU/GPU, or request a smaller camera resolution (e.g. 640x480). |
 | Boxes offset from objects | Expected to a degree; PCA FOV is narrower than passthrough. Write down how far off and at what distance. |
 | Unity Editor won't start: `libxml2.so.2: cannot open shared object file` | Ubuntu 26.04 with a 6000.0 Editor older than 76f1. Use the pinned 6000.0.84f1. |

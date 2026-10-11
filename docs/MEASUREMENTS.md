@@ -35,6 +35,7 @@ Numbers from on-device runs. Method and checklist: [TEST-TONIGHT.md](TEST-TONIGH
 - One monitor sometimes gets both a `TV` and a `LAPTOP` label (NMS is per class), and occasionally two `TV` tracks.
   - Fix pending on-device check: a cross-class suppression pass after NMS (IoU >= 0.6 keeps the higher score) and a tracker merge of same-class targets within 4 degrees for 2 batches.
 - A hand close to the headset is detected as `person` at about 0.36 m.
+  - Fix pending on-device check: `person` detections with a depth hit closer than 0.5 m (`HudApp > Min Person Distance`) are dropped before tracking. No-depth (`--`) detections are unchanged.
 
 ### Not measured yet
 - GPUCompute backend (press Y), distance accuracy against a tape measure, world-lock drift on head turns, ID switches per minute, lock success rate.

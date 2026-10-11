@@ -34,6 +34,8 @@ namespace IronManHud
         public bool CrossClassSuppression = true;
         [Range(0f, 1f), Tooltip("IoU at or above which overlapping boxes of different classes count as the same object.")]
         public float CrossClassIouThreshold = 0.6f;
+        [Tooltip("Ignore 'person' detections closer than this (m) when depth is known, so your own hands never become targets. 0 disables.")]
+        public float MinPersonDistance = 0.5f;
 
         [Header("Camera (Passthrough Camera API)")]
         public PassthroughCameraAccess.CameraPositionType CameraPosition = PassthroughCameraAccess.CameraPositionType.Left;
@@ -87,6 +89,7 @@ namespace IronManHud
 
             _tracker = new GameObject("Targets").AddComponent<TargetTracker>();
             _tracker.Init(_head, _labels);
+            _tracker.MinPersonDistance = MinPersonDistance;
 
             var controllerAnchor = _rig != null ? _rig.rightControllerAnchor : null;
             var trackingSpace = _rig != null ? _rig.trackingSpace : null;

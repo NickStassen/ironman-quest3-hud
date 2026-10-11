@@ -46,6 +46,8 @@ namespace IronManHud
         public float PositionAlpha = 0.35f;
         [Tooltip("Distance used when the depth raycast misses (m). Shown as '--'.")]
         public float FallbackDistance = 2f;
+        [Tooltip("Drop 'person' detections closer than this (m) with a real depth hit: the user's own hands. 0 disables.")]
+        public float MinPersonDistance = 0.5f;
         [Tooltip("Merge a newer same-class target into an older one when both are seen within this angle (degrees) of each other.")]
         public float DuplicateAngleDeg = 4f;
         [Tooltip("Consecutive detection batches a same-class overlap must last before the newer target is merged.")]
@@ -102,6 +104,12 @@ namespace IronManHud
                 Ray centerRay = _camera.ViewportPointToRay(new Vector2(u, v), cameraPose);
                 bool hasDepth = TryMedianDepth(cameraPose, u, v, halfW, halfH, out float depth);
                 if (hasDepth) LastDepthHits++; else LastDepthMisses++;
+
+                // The user's own hands come through as a near-field 'person'. Only filter on a real depth hit.
+                if (hasDepth && depth < MinPersonDistance && CocoLabels.Get(_labels, det.ClassId) == "person")
+                {
+                    continue;
+                }
 
                 // Find a target of the same class within the association cone (angle seen from the camera).
                 Target match = null;
