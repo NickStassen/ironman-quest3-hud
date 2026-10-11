@@ -33,6 +33,7 @@ Numbers from on-device runs. Method and checklist: [TEST-TONIGHT.md](TEST-TONIGH
 - Repulsor v0 works: the beam turns targets red and the status shows `LOCK #N TV`.
 - The HUD covered only about 40 degrees and lagged behind head turns (lazy follow). Changed to head-locked, then to a 70-degree visor curve (1.6 m radius). The README captures used the flat 64-degree head-locked version.
 - One monitor sometimes gets both a `TV` and a `LAPTOP` label (NMS is per class), and occasionally two `TV` tracks.
+  - Fix pending on-device check: a cross-class suppression pass after NMS (IoU >= 0.6 keeps the higher score) and a tracker merge of same-class targets within 4 degrees for 2 batches.
 - A hand close to the headset is detected as `person` at about 0.36 m.
 
 ### Not measured yet

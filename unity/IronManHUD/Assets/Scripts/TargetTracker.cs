@@ -31,6 +31,8 @@ namespace IronManHud
             /// <summary>Time.time of the last repulsor hit, or negative if never hit.</summary>
             public float HitTime = -100f;
             public int TimesHit;
+            /// <summary>Consecutive batches this target sat on top of an older same-class target.</summary>
+            public int DuplicateBatches;
             public TargetMarker Marker;
         }
 
@@ -44,6 +46,10 @@ namespace IronManHud
         public float PositionAlpha = 0.35f;
         [Tooltip("Distance used when the depth raycast misses (m). Shown as '--'.")]
         public float FallbackDistance = 2f;
+        [Tooltip("Merge a newer same-class target into an older one when both are seen within this angle (degrees) of each other.")]
+        public float DuplicateAngleDeg = 4f;
+        [Tooltip("Consecutive detection batches a same-class overlap must last before the newer target is merged.")]
+        public int DuplicateBatchesToMerge = 2;
 
         private readonly List<Target> _targets = new List<Target>();
         private readonly List<float> _depthSamples = new List<float>(5);
@@ -155,6 +161,56 @@ namespace IronManHud
                 match.Score = det.Score;
                 match.Hits++;
                 match.LastSeen = now;
+            }
+            MergeDuplicates(cameraPose.position);
+        }
+
+        /// <summary>
+        /// Two same-class targets updated this batch that sit almost on top of each other (seen from the camera) for
+        /// several batches are the same object: fold the newer one into the older one.
+        /// </summary>
+        private void MergeDuplicates(Vector3 eye)
+        {
+            for (int i = _targets.Count - 1; i >= 0; i--)
+            {
+                var newer = _targets[i];
+                if (newer.MatchedBatch != _batch)
+                {
+                    continue;
+                }
+                Target older = null;
+                for (int j = 0; j < i; j++)
+                {
+                    var t = _targets[j];
+                    if (t.ClassId == newer.ClassId && t.MatchedBatch == _batch &&
+                        Vector3.Angle(t.Position - eye, newer.Position - eye) < DuplicateAngleDeg)
+                    {
+                        older = t;
+                        break;
+                    }
+                }
+                if (older == null)
+                {
+                    newer.DuplicateBatches = 0;
+                    continue;
+                }
+                if (++newer.DuplicateBatches < DuplicateBatchesToMerge)
+                {
+                    continue;
+                }
+                older.Hits = Mathf.Max(older.Hits, newer.Hits);
+                older.TimesHit += newer.TimesHit;
+                older.HitTime = Mathf.Max(older.HitTime, newer.HitTime);
+                older.Score = Mathf.Max(older.Score, newer.Score);
+                if (LockedTarget == newer)
+                {
+                    LockedTarget = older;
+                }
+                if (newer.Marker != null)
+                {
+                    Destroy(newer.Marker.gameObject);
+                }
+                _targets.RemoveAt(i);
             }
         }
 

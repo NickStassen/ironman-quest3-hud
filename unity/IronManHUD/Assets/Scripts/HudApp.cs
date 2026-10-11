@@ -30,6 +30,10 @@ namespace IronManHud
         [Range(0f, 1f), Tooltip("0.3 let through blank-wall 'bird'/'kite' false positives on device.")]
         public float ScoreThreshold = 0.4f;
         [Range(0f, 1f)] public float IouThreshold = 0.5f;
+        [Tooltip("After per-class NMS, keep only the higher-scoring box when boxes of different classes overlap (one monitor as TV + LAPTOP).")]
+        public bool CrossClassSuppression = true;
+        [Range(0f, 1f), Tooltip("IoU at or above which overlapping boxes of different classes count as the same object.")]
+        public float CrossClassIouThreshold = 0.6f;
 
         [Header("Camera (Passthrough Camera API)")]
         public PassthroughCameraAccess.CameraPositionType CameraPosition = PassthroughCameraAccess.CameraPositionType.Left;
@@ -215,6 +219,8 @@ namespace IronManHud
                 {
                     ScoreThreshold = ScoreThreshold,
                     IouThreshold = IouThreshold,
+                    CrossClassSuppression = CrossClassSuppression,
+                    CrossClassIouThreshold = CrossClassIouThreshold,
                 };
                 Debug.Log($"[IronManHud] Model loaded: {asset.name}, input {_detector.InputSize}, format {_detector.FormatName}, backend {Backend}");
             }

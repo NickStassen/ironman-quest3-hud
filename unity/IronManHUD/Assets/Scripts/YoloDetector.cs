@@ -35,6 +35,9 @@ namespace IronManHud
         public float ScoreThreshold = 0.4f;
         public float IouThreshold = 0.5f;
         public int MaxDetections = 20;
+        /// <summary>After per-class NMS, drop a box that overlaps a higher-scoring box of another class (e.g. TV vs laptop).</summary>
+        public bool CrossClassSuppression = true;
+        public float CrossClassIouThreshold = 0.6f;
 
         private readonly Model _model;
         private Worker _worker;
@@ -302,6 +305,31 @@ namespace IronManHud
                 if (keep)
                 {
                     _results.Add(cand);
+                }
+            }
+            if (CrossClassSuppression)
+            {
+                SuppressCrossClass(_results, CrossClassIouThreshold);
+            }
+        }
+
+        /// <summary>
+        /// Class-agnostic pass over a score-sorted list: removes a box whose IoU with a higher-scoring box of a
+        /// different class is >= iouThreshold. Same-class overlaps are left to the per-class NMS.
+        /// </summary>
+        public static void SuppressCrossClass(List<Detection> sortedByScore, float iouThreshold)
+        {
+            for (int i = sortedByScore.Count - 1; i > 0; i--)
+            {
+                var cand = sortedByScore[i];
+                for (int j = 0; j < i; j++)
+                {
+                    var other = sortedByScore[j];
+                    if (other.ClassId != cand.ClassId && Detection.IoU(other, cand) >= iouThreshold)
+                    {
+                        sortedByScore.RemoveAt(i);
+                        break;
+                    }
                 }
             }
         }
